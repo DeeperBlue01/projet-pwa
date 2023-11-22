@@ -1,114 +1,111 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from 'react-query';
 
 interface MovieDetailsProps {
   movie: any;
   onReturn: () => void;
 }
 
+const fetchMovieDetails = async (movieId: number) => {
+  const mykey = '601e53055f7f5b886626fb5aa39fbcc0';
+
+  const [creditsResponse, imagesResponse, movieDetailsResponse] = await Promise.all([
+    fetch(`https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${mykey}`),
+    fetch(`https://api.themoviedb.org/3/movie/${movieId}/images?api_key=${mykey}`),
+    fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${mykey}`),
+  ]);
+
+  const creditsData = await creditsResponse.json();
+  const imagesData = await imagesResponse.json();
+  const movieDetailsData = await movieDetailsResponse.json();
+
+  const allImages = imagesData.backdrops;
+
+  return {
+    credits: creditsData,
+    images: allImages,
+    backgroundImage: allImages.length > 0 ? `url(https://image.tmdb.org/t/p/original${allImages[0].file_path})` : undefined,
+    title: movieDetailsData.title,
+    overview: movieDetailsData.overview,
+    genre: movieDetailsData.genres.map((genre: any) => genre.name).join(', '),
+    releaseDate: movieDetailsData.release_date,
+  };
+};
+
 const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
-  const [credits, setCredits] = useState<any>({});
-  const [images, setImages] = useState<any[]>([]);
-  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
+  const { data: movieDetails } = useQuery(['movieDetails', movie.id], () => fetchMovieDetails(movie.id));
 
-  useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const apiKey = '71ff4efa260fe7786fad72f69a37b9dd';
-        const response = await fetch(
-          `https://api.themoviedb.org/3/movie/${movie.id}/credits?api_key=${apiKey}`
-        );
-        const data = await response.json();
-        setCredits(data);
-      } catch (error) {
-        console.error('Error fetching credits data:', error);
-      }
-    };
-
-    const fetchImages = async () => {
-      try {
-        const apiKey = '601e53055f7f5b886626fb5aa39fbcc0';
-        const response = await fetch(
-          `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${apiKey}`
-        );
-        const data = await response.json();
-        // Sélectionner toutes les images
-        const allImages = data.backdrops;
-        setImages(allImages);
-          // Utiliser la première image de la liste des backdrops comme image de fond
-          if (allImages.length > 0) {
-            setBackgroundImage(`url(https://image.tmdb.org/t/p/original${allImages[0].file_path})`);
-          }
-      } catch (error) {
-        console.error('Error fetching images data:', error);
-      }
-    };
-
-    fetchCredits();
-    fetchImages();
-  }, [movie.id]);
-
-  // Afficher les détails du film (description, acteurs et images)
-  const mainActors = credits.cast?.filter((actor: any) => actor.order <= 10);
+  const mainActors = movieDetails?.credits.cast?.filter((actor: any) => actor.order <= 10);
 
   return (
-    <div className="container mx-auto">
-       <button
-            onClick={onReturn}
-            className="mt-4 text-white px-4 py-2 mb-2 rounded bg-transparent"
-          >
-           ← Back
+    <div className="min-h-screen min-w-screen bg-gray-100 dark:bg-gray-800 relative">
+      <div
+        style={{
+          backgroundImage: movieDetails?.backgroundImage,
+          backgroundSize: 'cover',
+        }}
+        className="backdrop-blur-xl inset-0 flex flex-col items-start"
+      >
+        <div className="p-6">
+        <button
+          onClick={onReturn}
+          className="mt-4 ml-4 text-white px-4 py-2 mb-2 rounded bg-transparent"
+        >
+          ← Back
         </button>
-        <style className="blur-lg">
-        {`
-          body {
-            background: ${backgroundImage} no-repeat center center fixed;
-            background-size: cover;
-          }
-        `}
-      </style>
-      <div className="flex flex-row md:grid-cols-2 gap-4 m-0 ">
+        <div className="p-8 flex items-end">
           <img
-            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-            alt={movie.title}
-            className="w-72 h-auto basis-1/4"
+            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+            alt={movieDetails?.title}
+            className="mr-8 rounded"
+            style={{ width: 300, height: 450 }}
           />
-          <div className="container w=5/6 self-end basis-3/4">
-            <p className="text-3xl">{movie.title}</p>
-            <p className="w-full h-auto">{movie.overview}</p>
-            <p>{movie.release_date}</p>
-            
+          <div>
+            <h1 className="font-sans text-4xl mb-2">{movieDetails?.title}</h1>
+            <p className="text-lg font-sans	mb-2">{movieDetails?.overview}</p>
+            <div className="flex flex-col">
+              <p className="text-lg mr-4">
+                {movieDetails?.genre}
+              </p>
+              <p className="text-lg">
+               {movieDetails?.releaseDate}
+              </p>
             </div>
-      </div>
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Équipe du film</h2>
-        <div className="flex overflow-x-auto gap-4">
-          {mainActors &&
-            mainActors.map((actor: any) => (
-              <div key={actor.credit_id} className="flex flex-col items-center">
+          </div>
+        </div>
+        <div className="p-8">
+          <h2 className="font-sans text-2xl">Credits</h2>
+          <div className="flex flex-row overflow-x-auto">
+            {mainActors?.map((actor: any) => (
+              <div key={actor.id} className="flex-shrink-0 mr-4">
                 <img
-                  src={`https://image.tmdb.org/t/p/w300${actor.profile_path}`}
+                  src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
                   alt={actor.name}
-                  className="w-40 h-60 object-cover rounded-lg mb-2"
+                  className="rounded"
+                  style={{ width: 200, height: 300 }}
                 />
-                <p className="text-center">{actor.name}</p>
-                {actor.character && (
-                  <p className="text-sm text-gray-500">{actor.character}</p>
-                )}
+                <p className="font-sans text-114 mt-2">
+                  {actor.name}
+                  <br />
+                  <span className="font-sans text-sm">{actor.character}</span>
+                </p>
               </div>
             ))}
+          </div>
+          <h2 className="text-2xl">Images</h2>
+          <div className="flex flex-row overflow-x-auto mt-4">
+            {movieDetails?.images.map((image: any) => (
+              <div key={image.file_path} className="flex-shrink-0 mr-4">
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${image.file_path}`}
+                  alt={movieDetails.title}
+                  className="rounded"
+                  style={{ width: 500, height: 281 }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Images du film</h2>
-        <div className="flex overflow-x-auto gap-4">
-          {images.map((image: any) => (
-            <img
-              key={image.file_path}
-              src={`https://image.tmdb.org/t/p/w1280${image.file_path}`}
-              alt={`Image ${image.file_path}`}
-              className="w-full h-auto object-cover rounded-lg mb-2"
-            />
-          ))}
         </div>
       </div>
     </div>
