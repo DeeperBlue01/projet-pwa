@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import MovieDetails from './MovieDetails';
@@ -6,7 +5,7 @@ import MovieDetails from './MovieDetails';
 const queryClient = new QueryClient();
 
 const MovieList: React.FC = () => {
-  const [selectedMovie, setSelectedMovie] = useState<any>(null); 
+  const [selectedMovie, setSelectedMovie] = useState<any>(null);
 
   const handleMovieClick = (movie: any) => {
     setSelectedMovie(movie);
@@ -30,6 +29,7 @@ const MovieList: React.FC = () => {
 const Movie: React.FC<{ onMovieClick: (movie: any) => void }> = ({ onMovieClick }) => {
   const { data, isLoading, isError } = useQuery('movies', fetchMovies);
   const [searchTerm, setSearchTerm] = useState<string>('');
+
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
@@ -42,28 +42,32 @@ const Movie: React.FC<{ onMovieClick: (movie: any) => void }> = ({ onMovieClick 
     return <div>Error fetching movies</div>;
   }
 
+  const filteredMovies = data.results.filter((movie: any) =>
+    movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen min-w-screen bg-gray-100 dark:bg-gray-800">
       <div className="p-12">
-    <div>
-      <div className="flex justify-end mb-4">
-        <h1 className="text-3xl font-semibold mb-4 w-full">🎬🍿 Movie library</h1>
-        <input
-                type="text"
-                placeholder=" 🔎 Search for movie                                                                    "
-                value={searchTerm}
-                onChange={handleSearch}
-                className="border p-2 rounded-3xl h-12"
-              />
-      </div>
+        <div>
+          <div className="flex justify-end mb-4">
+            <h1 className="text-3xl font-semibold mb-4 w-full ">🎬🍿 Movie library</h1>
+            <input
+              type="text"
+              placeholder="🔎 Search for movie"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="border p-2 rounded-3xl h-12"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {data.results.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} onMovieClick={onMovieClick} />
-        ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filteredMovies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} onMovieClick={onMovieClick} />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-    </div>
     </div>
   );
 };

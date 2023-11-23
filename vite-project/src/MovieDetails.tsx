@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 
+
 interface MovieDetailsProps {
   movie: any;
   onReturn: () => void;
@@ -36,17 +37,22 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
   const { data: movieDetails } = useQuery(['movieDetails', movie.id], () => fetchMovieDetails(movie.id));
 
   const mainActors = movieDetails?.credits.cast?.filter((actor: any) => actor.order <= 10);
+  const dateUs = (date: string) => {
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    const formattedDate = new Date(date).toLocaleDateString('en-US', options);
+    return formattedDate;
+  };
 
   return (
-    <div className="min-h-screen min-w-screen bg-gray-100 dark:bg-gray-800 relative">
+    <div className="min-h-screen min-w-screen">
       <div
         style={{
           backgroundImage: movieDetails?.backgroundImage,
-          backgroundSize: 'cover',
+          backgroundSize: '130% 100%',
         }}
-        className="backdrop-blur-xl inset-0 flex flex-col items-start"
+        className="inset-0 flex flex-col sm:flex-row items-start"
       >
-        <div className="p-6">
+        <div className="p-6 backdrop-blur-lg bg-slate-800/40">
         <button
           onClick={onReturn}
           className="mt-4 ml-4 text-white px-4 py-2 mb-2 rounded bg-transparent"
@@ -68,7 +74,7 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
                 {movieDetails?.genre}
               </p>
               <p className="text-lg">
-               {movieDetails?.releaseDate}
+              {dateUs(movieDetails?.releaseDate)}
               </p>
             </div>
           </div>
@@ -84,7 +90,7 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
                   className="rounded"
                   style={{ width: 200, height: 300 }}
                 />
-                <p className="font-sans text-114 mt-2">
+                <p className="font-sans mt-2">
                   {actor.name}
                   <br />
                   <span className="font-sans text-sm">{actor.character}</span>
