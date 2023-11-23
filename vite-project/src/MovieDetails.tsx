@@ -1,13 +1,11 @@
 import React from 'react';
 import { useQuery } from 'react-query';
+import {Link, useParams} from 'react-router-dom';
 
 
-interface MovieDetailsProps {
-  movie: any;
-  onReturn: () => void;
-}
 
-const fetchMovieDetails = async (movieId: number) => {
+
+const fetchMovieDetails = async (movieId: string) => {
   const mykey = '601e53055f7f5b886626fb5aa39fbcc0';
 
   const [creditsResponse, imagesResponse, movieDetailsResponse] = await Promise.all([
@@ -30,11 +28,13 @@ const fetchMovieDetails = async (movieId: number) => {
     overview: movieDetailsData.overview,
     genre: movieDetailsData.genres.map((genre: any) => genre.name).join(', '),
     releaseDate: movieDetailsData.release_date,
+    poster_path: movieDetailsData.poster_path,
   };
 };
 
-const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
-  const { data: movieDetails } = useQuery(['movieDetails', movie.id], () => fetchMovieDetails(movie.id));
+const MovieDetails: React.FC = () => {
+  const {id} = useParams<{id : string}>()
+  const { data: movieDetails } = useQuery(['movieDetails', id], () => fetchMovieDetails(id!));
 
   const mainActors = movieDetails?.credits.cast?.filter((actor: any) => actor.order <= 10);
   const dateUs = (date: string) => {
@@ -53,15 +53,14 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
         className="inset-0 flex flex-col sm:flex-row items-start"
       >
         <div className="p-6 backdrop-blur-lg bg-slate-800/40">
-        <button
-          onClick={onReturn}
+        <Link to = "/"
           className="mt-4 ml-4 text-white px-4 py-2 mb-2 rounded bg-transparent"
         >
           ← Back
-        </button>
+        </Link>
         <div className="p-8 flex items-end">
           <img
-            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+            src={`https://image.tmdb.org/t/p/w300${movieDetails?.poster_path}`}
             alt={movieDetails?.title}
             className="mr-8 rounded"
             style={{ width: 300, height: 450 }}
@@ -116,6 +115,14 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onReturn }) => {
       </div>
     </div>
   );
+};
+
+const fetchMovieById = async (id : string) => {
+  const response = await fetch(
+    `https://api.themoviedb.org/3/movie/${id}?api_key=601e53055f7f5b886626fb5aa39fbcc0`
+  );
+  const data = await response.json();
+  return data;
 };
 
 export default MovieDetails;

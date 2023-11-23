@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import MovieDetails from './MovieDetails';
-
+import {Link, useParams} from 'react-router-dom';
 const queryClient = new QueryClient();
 
 const MovieList: React.FC = () => {
@@ -18,7 +18,7 @@ const MovieList: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       {selectedMovie ? (
-        <MovieDetails movie={selectedMovie} onReturn={handleReturnToList} />
+        <MovieDetails/>
       ) : (
         <Movie onMovieClick={handleMovieClick} />
       )}
@@ -63,7 +63,7 @@ const Movie: React.FC<{ onMovieClick: (movie: any) => void }> = ({ onMovieClick 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredMovies.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} onMovieClick={onMovieClick} />
+              <Link to = {`/Movie/${movie.id}`}><MovieCard key={movie.id} movie={movie} onMovieClick={onMovieClick} /></Link>
             ))}
           </div>
         </div>
@@ -93,5 +93,7 @@ const fetchMovies = async () => {
   const data = await response.json();
   return data;
 };
+
+
 
 export default MovieList;
